@@ -1,0 +1,19 @@
+/*svg text{
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}*/
+
+.colorswatch {
+  display: inline-block;
+  height: 20px;
+  width: 20px;
+  margin: 5px;
+}
+
+textarea {
+  width: 600px;
+  height: 300px;
+  font-size: 12px;
+}
