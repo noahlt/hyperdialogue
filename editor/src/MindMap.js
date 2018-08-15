@@ -28,23 +28,32 @@ export default class MindMap extends Component {
     this.handleKeyDown = this.handleKeyDown.bind(this);
   }
 
+  // getMouseCoordinates takes a DOM Mouse Event and returns x and y
+  // coordinates relative to the top left corner of the svg element
+  // (ie, relative to (0,0) in the drawing context).  Raw Mouse Events
+  // only give coordinates relative to the Document or browser window.
+  getMouseCoordinates(evt) {
+    let svgRect = this.svgRef.current.getBoundingClientRect();
+    return [evt.pageX - svgRect.left, evt.pageY - svgRect.top];
+  }
+
   mouseMoveEmpty(evt) {
     if (this.state.mode === mode.connecting) {
-      let svgRect = this.svgRef.current.getBoundingClientRect();
+      let [x, y] = this.getMouseCoordinates(evt);
       this.setState({
-        mouseX: evt.pageX - svgRect.left,
-        mouseY: evt.pageY - svgRect.top,
+        mouseX: x,
+        mouseY: y,
       });
     }
   }
 
   clickEmpty(evt) {
     if (this.state.mode === mode.default && !this.props.selectedNode) {
-      let svgRect = this.svgRef.current.getBoundingClientRect();
+      let [mouseX, mouseY] = this.getMouseCoordinates(evt);
       let newNode = {
         nodeID: guid(),
-        cx: evt.pageX - svgRect.left,
-        cy: evt.pageY - svgRect.top,
+        cx: mouseX,
+        cy: mouseY,
         label: '',
         color: defaultColor,
         links: [],
@@ -86,23 +95,23 @@ export default class MindMap extends Component {
     // console.log('app.mouseMoveNode', nodeID, evt.buttons, evt.pageX, evt.pageY);
     if (this.state.mode === mode.default && evt.buttons === 1) {
       this.props.setSelected(nodeID);
-      let svgRect = this.svgRef.current.getBoundingClientRect();
+      let [mouseX, mouseY] = this.getMouseCoordinates(evt);
       this.setState({
         hasFocus: true,
         mode: mode.connecting,
-        mouseX: evt.pageX - svgRect.left,
-        mouseY: evt.pageY - svgRect.top,
+        mouseX: mouseX,
+        mouseY: mouseY,
       });
     } else if (this.state.mode === mode.connecting && nodeID !== this.props.selectedNode.nodeID) {
       this.setState({
         hover: nodeID,
       });
     } else if (this.state.mode === mode.selected && nodeID === this.props.selectedNode.nodeID && evt.buttons === 1) {
-      let svgRect = this.svgRef.current.getBoundingClientRect();
+      let [mouseX, mouseY] = this.getMouseCoordinates(evt);
       this.props.setDoc(_.mapValues(this.props.doc, (node) => {
         if (node.nodeID === this.props.selectedNode.nodeID) {
-          node.cx = evt.pageX - svgRect.left;
-          node.cy = evt.pageY - svgRect.top;
+          node.cx = mouseX;
+          node.cy = mouseY;
         }
         return node;
       }));

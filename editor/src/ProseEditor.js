@@ -67,9 +67,8 @@ const mentionInputStyle = {
 
   input: {
     margin: 0,
-    height: 300,
+    height: 200,
     overflow: 'auto',
-    //width: 700,
   },
 
   '&singleLine': {
