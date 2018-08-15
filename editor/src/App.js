@@ -6,10 +6,8 @@ import 'firebase/firestore';
 
 import _ from 'lodash';
 
+import MindMap from './MindMap';
 import ProseEditor from './ProseEditor';
-import Box from './Box';
-
-const defaultColor = '#FFFFDE';
 
 firebase.initializeApp({
   apiKey: "AIzaSyCzyxSKeYlkMZBTaAIdJey-wkIHjMi-Uqg",
@@ -23,182 +21,25 @@ firebase.initializeApp({
 var db = firebase.firestore();
 db.settings({timestampsInSnapshots: true});
 
-function guid() {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-}
-
-const modeDefault = 0;
-const modeSelected = 1;
-const modeConnecting = 2;
-const modeTyping = 3;
-const modeLinkSelected = 4;
-
 class App extends Component {
   constructor() {
     super();
     this.state = {
       doc: {},
-      focusMindMap: false, // this should be extracted to MindMap component
       selected: null,
-      mode: modeDefault,
       mouseX: 0,
       mouseY: 0,
     }
-    this.svgRef= React.createRef(); // MindMap component
-    this.keyDown = this.keyDown.bind(this);
+    this.setSelected = this.setSelected.bind(this);
+    this.setDoc = this.setDoc.bind(this);
   }
 
-  clickNode(nodeID, evt) {
-    console.log('clickNode', evt);
-    evt.stopPropagation();
-    this.svgRef.current.focus();
-    this.setState({
-      selected: nodeID,
-      mode: modeSelected,
-      focusMindMap: true,
-    });
+  setSelected(nodeID) {
+    this.setState({selected: nodeID});
   }
 
-  mouseMoveNode(nodeID, evt) {
-    // console.log('app.mouseMoveNode', nodeID, evt.buttons, evt.pageX, evt.pageY);
-    if (this.state.mode === modeDefault && evt.buttons === 1) {
-      this.setState({
-        selected: nodeID,
-        focusMindMap: true,
-        mode: modeConnecting,
-        mouseX: evt.clientX,
-        mouseY: evt.clientY,
-      });
-    } else if (this.state.mode === modeConnecting && nodeID !== this.state.selected) {
-      this.setState({
-        hover: nodeID,
-      });
-    } else if (this.state.mode === modeSelected && nodeID === this.state.selected && evt.buttons === 1) {
-      this.setState({
-        doc: _.mapValues(this.state.doc, (node) => {
-          if (node.nodeID === this.state.selected) {
-            node.cx = evt.clientX;
-            node.cy = evt.clientY;
-          }
-          return node;
-        }),
-      })
-    }
-  }
-
-  mouseDownNode(nodeID, evt) {
-    evt.preventDefault();
-  }
-
-  mouseUpNode(nodeID, evt) {
-    if (this.state.mode === modeConnecting) {
-      this.setState({
-        doc: _.mapValues(this.state.doc, (node) => {
-          if (node.nodeID === this.state.selected) {
-            node.links.push(nodeID);
-          }
-          return node;
-        }),
-      });
-    }
-  }
-
-  mouseMoveEmpty(evt) {
-    if (this.state.mode === modeConnecting) {
-      this.setState({
-        mouseX: evt.clientX,
-        mouseY: evt.clientY,
-      });
-    }
-  }
-
-  clickEmpty(evt) {
-    if (this.state.mode === modeDefault && this.state.selected === null) {
-      let newNode = {
-        nodeID: guid(),
-        cx: evt.clientX,
-        cy: evt.clientY,
-        label: '',
-        color: defaultColor,
-        links: [],
-        text: [],
-      };
-      this.state.doc[newNode.nodeID] = newNode;
-      this.setState({
-        doc: this.state.doc,
-        mode: modeSelected,
-        selected: newNode.nodeID,
-      });
-    } else {
-      this.setState({
-        selected: null,
-        hover: null,
-        mode: modeDefault,
-      });
-    }
-  }
-
-  keyDown(evt) {
-    if (!this.state.focusMindMap) {
-      return;
-    }
-    console.log(evt);
-    evt.preventDefault();
-    if (evt.key === 'Escape') {
-      this.setState({
-        selected: null,
-        hover: null,
-        mode: modeDefault,
-      });
-      return;
-    }
-    if (this.state.mode === modeSelected) {
-      if (evt.key === 'Backspace') {
-        delete this.state.doc[this.state.selected];
-        this.setState({
-          doc: this.state.doc,
-          mode: modeDefault,
-          selected: null,
-        });
-      } else if (evt.key.length === 1) {
-        this.setState({
-          doc: _.mapValues(this.state.doc, (node) => {
-            if (node.nodeID === this.state.selected) {
-              node.label = evt.key;
-            }
-            return node;
-          }),
-          mode: modeTyping,
-        });
-      }
-    } else if (this.state.mode === modeTyping) {
-      if (evt.key === 'Enter') {
-        this.setState({
-          mode: modeSelected,
-        });
-      } else if (evt.key.length === 1) {
-        this.setState({
-          doc: _.mapValues(this.state.doc, (node) => {
-            if (node.nodeID === this.state.selected) {
-              node.label += evt.key;
-            }
-            return node;
-          }),
-        });
-      }
-    }
-  }
-
-  blurMindMap() {
-    console.log("BLUR mind map!");
-    this.setState({
-      focusMindMap: false,
-    });
+  setDoc(newDoc) {
+    this.setState({doc: newDoc});
   }
 
   onPickColor(c) {
@@ -245,7 +86,7 @@ class App extends Component {
         console.log('unable to load document');
         return;
       }
-      console.log('loaded doc data', doc.data());
+      console.log('loaded doc data', JSON.stringify(doc.data()));
       this.setState({
         doc: doc.data().nodes,
       });
@@ -258,53 +99,19 @@ class App extends Component {
 
   render() {
     let selectedNode = this.state.doc[this.state.selected];
-    let links = _.uniq(_.flatten(
-      _.map(_.values(this.state.doc),
-            (node) => _.map(node.links,
-                            (linkID) => {
-                              let pair = _.sortBy([node.nodeID, linkID]);
-                              return {a: pair[0], b: pair[1]};
-                            }))));
-    let linkedNodes = _.map(links, (pair) => ({a: this.state.doc[pair.a], b: this.state.doc[pair.b]}));
-    let validLinks = _.filter(linkedNodes, (pair) => pair.a && pair.b); // only keep links where both ends are non-null
     return <div className="App">
-      <svg
-        id="generated-svg"
-        ref={this.svgRef}
-        width="1000px"
-        height="500px"
-        viewBox="0 0 1000 500"
-        version="1.1"
-        tabIndex="0"
-        onMouseMove={this.mouseMoveEmpty.bind(this)}
-        onClick={this.clickEmpty.bind(this)}
-        onBlur={this.blurMindMap.bind(this)}
-        >
-        {this.state.mode === modeConnecting && selectedNode &&
-          <line x1={selectedNode.cx} y1={selectedNode.cy} x2={this.state.mouseX} y2={this.state.mouseY} stroke="#aaa" />
-        }
-        {validLinks.map((pair) =>
-          <line x1={pair.a.cx} y1={pair.a.cy} x2={pair.b.cx} y2={pair.b.cy} stroke="#aaa" />
-        )}
-        {Object.values(this.state.doc).map((node) =>
-          <Box
-            key={node.nodeID}
-            highlightBorder={(this.state.selected === node.nodeID) || (this.state.hover === node.nodeID)}
-            highlightText={this.state.selected === node.nodeID && this.state.mode === modeTyping}
-            onClick={this.clickNode.bind(this, node.nodeID)}
-            onMouseMove={this.mouseMoveNode.bind(this, node.nodeID)}
-            onMouseDown={this.mouseDownNode.bind(this, node.nodeID)}
-            onMouseUp={this.mouseUpNode.bind(this, node.nodeID)}
-            {...node}
-            />
-        )}
-      </svg>
+      <MindMap
+        selectedNode={selectedNode}
+        doc={this.state.doc}
+        setSelected={this.setSelected}
+        setDoc={this.setDoc}
+        />
 
       <button onClick={this.clickSave.bind(this)}>save</button>
       <ColorPicker onPickColor={this.onPickColor.bind(this)} />
 
       <div id="reader">
-        {this.state.mode === modeSelected && selectedNode &&
+        {selectedNode &&
           <ProseEditor
             current={selectedNode}
             nodes={this.state.doc}
