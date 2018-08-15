@@ -30,19 +30,21 @@ export default class MindMap extends Component {
 
   mouseMoveEmpty(evt) {
     if (this.state.mode === mode.connecting) {
+      let svgRect = this.svgRef.current.getBoundingClientRect();
       this.setState({
-        mouseX: evt.clientX,
-        mouseY: evt.clientY,
+        mouseX: evt.pageX - svgRect.left,
+        mouseY: evt.pageY - svgRect.top,
       });
     }
   }
 
   clickEmpty(evt) {
     if (this.state.mode === mode.default && !this.props.selectedNode) {
+      let svgRect = this.svgRef.current.getBoundingClientRect();
       let newNode = {
         nodeID: guid(),
-        cx: evt.clientX,
-        cy: evt.clientY,
+        cx: evt.pageX - svgRect.left,
+        cy: evt.pageY - svgRect.top,
         label: '',
         color: defaultColor,
         links: [],
@@ -84,21 +86,23 @@ export default class MindMap extends Component {
     // console.log('app.mouseMoveNode', nodeID, evt.buttons, evt.pageX, evt.pageY);
     if (this.state.mode === mode.default && evt.buttons === 1) {
       this.props.setSelected(nodeID);
+      let svgRect = this.svgRef.current.getBoundingClientRect();
       this.setState({
         hasFocus: true,
         mode: mode.connecting,
-        mouseX: evt.clientX,
-        mouseY: evt.clientY,
+        mouseX: evt.pageX - svgRect.left,
+        mouseY: evt.pageY - svgRect.top,
       });
     } else if (this.state.mode === mode.connecting && nodeID !== this.props.selectedNode.nodeID) {
       this.setState({
         hover: nodeID,
       });
     } else if (this.state.mode === mode.selected && nodeID === this.props.selectedNode.nodeID && evt.buttons === 1) {
+      let svgRect = this.svgRef.current.getBoundingClientRect();
       this.props.setDoc(_.mapValues(this.props.doc, (node) => {
         if (node.nodeID === this.props.selectedNode.nodeID) {
-          node.cx = evt.clientX;
-          node.cy = evt.clientY;
+          node.cx = evt.pageX - svgRect.left;
+          node.cy = evt.pageY - svgRect.top;
         }
         return node;
       }));

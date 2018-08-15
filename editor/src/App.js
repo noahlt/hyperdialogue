@@ -94,6 +94,7 @@ class App extends Component {
   render() {
     let selectedNode = this.state.doc[this.state.selected];
     return <div className="App">
+      <ColorPicker onPickColor={this.onPickColor.bind(this)} />
       <MindMap
         selectedNode={selectedNode}
         doc={this.state.doc}
@@ -102,7 +103,6 @@ class App extends Component {
         />
 
       <button onClick={this.clickSave.bind(this)}>save</button>
-      <ColorPicker onPickColor={this.onPickColor.bind(this)} />
 
       <div id="reader">
         {selectedNode &&
