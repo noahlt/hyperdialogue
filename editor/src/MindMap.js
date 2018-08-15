@@ -25,7 +25,7 @@ export default class MindMap extends Component {
       hover: null,
     }
     this.svgRef= React.createRef(); // MindMap component
-    this.keyDown = this.keyDown.bind(this);
+    this.handleKeyDown = this.handleKeyDown.bind(this);
   }
 
   mouseMoveEmpty(evt) {
@@ -38,7 +38,7 @@ export default class MindMap extends Component {
   }
 
   clickEmpty(evt) {
-    if (this.state.mode === mode.default && !!this.props.selectedNode) {
+    if (this.state.mode === mode.default && !this.props.selectedNode) {
       let newNode = {
         nodeID: guid(),
         cx: evt.clientX,
@@ -50,7 +50,7 @@ export default class MindMap extends Component {
       };
       let docUpdate = {};
       docUpdate[newNode.nodeID] = newNode;
-      this.props.setDoc(Object.assign({}, this.props.doc, docUpdate))
+      this.props.setDoc(Object.assign({}, this.props.doc, docUpdate));
       this.props.setSelected(newNode.nodeID);
       this.setState({mode: mode.selected});
     } else {
@@ -120,11 +120,10 @@ export default class MindMap extends Component {
     }
   }
 
-  keyDown(evt) {
+  handleKeyDown(evt) {
     if (!this.state.focusMindMap) {
       return;
     }
-    console.log(evt);
     evt.preventDefault();
     if (evt.key === 'Escape') {
       this.props.setSelected(null);
@@ -136,14 +135,13 @@ export default class MindMap extends Component {
     }
     if (this.state.mode === mode.selected) {
       if (evt.key === 'Backspace') {
+        this.props.setDoc(_.omit(this.props.doc, this.props.selectedNode.nodeID));
         this.props.setSelected(null);
-        this.props.setDoc(_.filter(this.props.doc, (x) =>
-          x.label !== this.props.selectedNode.label));
         this.setState({
           mode: mode.default,
         });
       } else if (evt.key.length === 1) {
-        this.setDoc(_.mapValues(this.props.doc, (node) => {
+        this.props.setDoc(_.mapValues(this.props.doc, (node) => {
           if (node.nodeID === this.props.selectedNode.nodeID) {
             node.label = evt.key;
           }
@@ -167,15 +165,24 @@ export default class MindMap extends Component {
     }
   }
 
+  componentDidMount() {
+    document.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.handleKeyDown);
+  }
+
   render() {
     let selectedNode = this.props.selectedNode;
     let links = _.uniq(_.flatten(
-      _.map(_.values(this.props.doc),
-            (node) => _.map(node.links,
-                            (linkID) => {
-                              let pair = _.sortBy([node.nodeID, linkID]);
-                              return {a: pair[0], b: pair[1]};
-                            }))));
+      _.map(_.values(this.props.doc), (node) =>
+        _.map(node.links, (linkID) => {
+          let pair = _.sortBy([node.nodeID, linkID]);
+          return {a: pair[0], b: pair[1]};
+        })
+      )
+    ));
     let linkedNodes = _.map(links, (pair) => ({a: this.props.doc[pair.a], b: this.props.doc[pair.b]}));
     let validLinks = _.filter(linkedNodes, (pair) => pair.a && pair.b); // only keep links where both ends are non-null
 

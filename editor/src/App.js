@@ -79,8 +79,6 @@ class App extends Component {
   }
 
   componentDidMount() {
-    document.addEventListener('keydown', this.keyDown);
-
     db.collection('dialogues').doc('test-00').get().then((doc) => {
       if (!doc.exists) {
         console.log('unable to load document');
@@ -91,10 +89,6 @@ class App extends Component {
         doc: doc.data().nodes,
       });
     });
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.keyDown);
   }
 
   render() {
