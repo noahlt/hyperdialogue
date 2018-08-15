@@ -21,10 +21,10 @@ export default class MindMap extends Component {
     super(props);
     this.state = {
       mode: mode.default,
-      focusMindMap: false,
+      hasFocus: false,
       hover: null,
     }
-    this.svgRef= React.createRef(); // MindMap component
+    this.svgRef= React.createRef();
     this.handleKeyDown = this.handleKeyDown.bind(this);
   }
 
@@ -62,10 +62,10 @@ export default class MindMap extends Component {
     }
   }
 
-  blurMindMap() { // TODO: rename (blur? blurSVG?)
+  handleBlur() {
     console.log("BLUR mind map!");
     this.setState({
-      focusMindMap: false,
+      hasFocus: false,
     });
   }
 
@@ -75,7 +75,7 @@ export default class MindMap extends Component {
     this.props.setSelected(nodeID);
     this.setState({
       mode: mode.selected,
-      focusMindMap: true,
+      hasFocus: true,
     });
     console.log('clickNode');
   }
@@ -85,7 +85,7 @@ export default class MindMap extends Component {
     if (this.state.mode === mode.default && evt.buttons === 1) {
       this.props.setSelected(nodeID);
       this.setState({
-        focusMindMap: true,
+        hasFocus: true,
         mode: mode.connecting,
         mouseX: evt.clientX,
         mouseY: evt.clientY,
@@ -121,7 +121,7 @@ export default class MindMap extends Component {
   }
 
   handleKeyDown(evt) {
-    if (!this.state.focusMindMap) {
+    if (!this.state.hasFocus) {
       return;
     }
     evt.preventDefault();
@@ -196,7 +196,7 @@ export default class MindMap extends Component {
       tabIndex="0"
       onMouseMove={this.mouseMoveEmpty.bind(this)}
       onClick={this.clickEmpty.bind(this)}
-      onBlur={this.blurMindMap.bind(this)}
+      onBlur={this.handleBlur.bind(this)}
       >
       {this.state.mode === mode.connecting && selectedNode &&
         <line x1={selectedNode.cx} y1={selectedNode.cy} x2={this.state.mouseX} y2={this.state.mouseY} stroke="#aaa" />
