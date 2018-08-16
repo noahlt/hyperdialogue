@@ -3,6 +3,7 @@ import './App.css';
 
 import * as firebase from 'firebase/app';
 import 'firebase/firestore';
+import 'firebase/auth';
 
 import _ from 'lodash';
 
@@ -26,13 +27,62 @@ class App extends Component {
     super(props);
     this.state = {
       loading: true,
+      // true after user clicks 'login' but before redirect loads:
+      redirecting: false,
+    };
+  }
+
+  login() {
+    var provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithRedirect(provider);
+    this.setState({redirecting: true});
+  }
+
+  componentDidMount() {
+    console.log('getting auth redirect result...');
+    firebase.auth().getRedirectResult().then((result) => {
+      if (result.credential) {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        //var token = result.credential.accessToken;
+      }
+      this.setState({loading: false});
+    }).catch(function(error) {
+      console.error('failed to authenticate', error.code, error.message, error.email);
+    });
+  }
+
+  render() {
+    if (this.state.loading) {
+      return <div>Loading...</div>;
+    }
+    if (firebase.auth().currentUser) {
+      console.log(firebase.auth().currentUser);
+      return <LoggedIn />;
+    } else {
+      return <div>
+        <div>We are logged out.</div>
+        <button
+          onClick={this.login.bind(this)}
+          disabled={this.state.redirecting}>
+          Log in
+        </button>
+      </div>;
+    }
+  }
+}
+
+class LoggedIn extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      loading: true,
       openDoc: null,
       docList: [],
     };
   }
 
   componentDidMount() {
-    db.collection('dialogues').get().then((snapshot) => {
+    db.collection('dialogues').where("owner", "==", firebase.auth().currentUser.uid).get().then((snapshot) => {
       console.log(snapshot);
       this.setState({
         loading: false,
@@ -53,6 +103,7 @@ class App extends Component {
     // todo: save this in the background and immediately open new doc
     db.collection('dialogues').add({
       name: name,
+      owner: firebase.auth().currentUser.uid,
       nodes: {},
     }).then((docRef) => {
       this.setState({
@@ -176,6 +227,7 @@ class Editor extends Component {
   clickSave() {
     db.collection("dialogues").doc(this.props.docID).set({
       name: this.props.docName,
+      owner: firebase.auth().currentUser.uid,
       nodes: this.state.doc,
     })
     .then(function() {

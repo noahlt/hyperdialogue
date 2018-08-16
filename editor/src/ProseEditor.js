@@ -32,7 +32,10 @@ export default class ProseEditor extends Component {
       }
     });
 
-    const mentions = _.map(inboundLinks.concat(this.props.current.links), (linkID) =>
+    const validOutboundLinks =
+      _.filter(this.props.current.links, (linkID) => this.props.nodes[linkID]);
+
+    const mentions = _.map(inboundLinks.concat(validOutboundLinks), (linkID) =>
       ({id: linkID, display: this.props.nodes[linkID].label}));
 
     return <div>

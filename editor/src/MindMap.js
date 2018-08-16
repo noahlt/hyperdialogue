@@ -73,11 +73,14 @@ export default class MindMap extends Component {
     }
   }
 
+  handleFocus() {
+    console.log('focus!');
+    this.setState({hasFocus: true});
+  }
+
   handleBlur() {
-    console.log("BLUR mind map!");
-    this.setState({
-      hasFocus: false,
-    });
+    console.log('blur!');
+    this.setState({hasFocus: false});
   }
 
   clickNode(nodeID, evt) {
@@ -209,6 +212,7 @@ export default class MindMap extends Component {
       tabIndex="0"
       onMouseMove={this.mouseMoveEmpty.bind(this)}
       onClick={this.clickEmpty.bind(this)}
+      onFocus={this.handleFocus.bind(this)}
       onBlur={this.handleBlur.bind(this)}
       >
       {this.state.mode === mode.connecting && selectedNode &&
