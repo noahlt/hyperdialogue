@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 
-import {mode} from './constants';
+import {mode, defaultColor} from './constants';
 import _ from 'lodash';
 
 import Box from './Box';
-
-const defaultColor = '#FFFFDE';
 
 function guid() {
   function s4() {

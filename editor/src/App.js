@@ -10,6 +10,8 @@ import _ from 'lodash';
 import MindMap from './MindMap';
 import ProseEditor from './ProseEditor';
 
+import {colors} from './constants';
+
 firebase.initializeApp({
   apiKey: "AIzaSyCzyxSKeYlkMZBTaAIdJey-wkIHjMi-Uqg",
   authDomain: "hyperdialogue-8db83.firebaseapp.com",
@@ -279,8 +281,7 @@ class Editor extends Component {
 
 const ColorPicker = (props) => (
   <div>
-    {['#DFBAB1', '#EECDCD', '#F8E5D0', '#FDF2D0', '#DCE9D5',
-      '#D3E0E2', '#CCDAF5', '#D2E2F1', '#D8D3E7', '#E6D2DB'].map((c) =>
+    {colors.map((c) =>
       <div
         key={c}
         className="colorswatch"
