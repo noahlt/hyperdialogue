@@ -167,6 +167,13 @@ export default class MindMap extends Component {
         this.setState({
           mode: mode.selected,
         });
+      } if (evt.key === 'Backspace') {
+        this.props.setDoc(_.mapValues(this.props.doc, (node) => {
+          if (node.nodeID === this.props.selectedNode.nodeID) {
+            node.label = node.label.slice(0, -1);
+          }
+          return node;
+        }));
       } else if (evt.key.length === 1) {
         this.props.setDoc(_.mapValues(this.props.doc, (node) => {
           if (node.nodeID === this.props.selectedNode.nodeID) {

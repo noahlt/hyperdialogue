@@ -1,15 +1,23 @@
 import React, { Component } from 'react';
 
+const emptyBBox = {width: 0, height: 14};
+
 export default class Box extends Component {
   constructor(props) {
     super(props);
-    this.emptyBBox = {width: 0, height: 14};
     this.state = { bbox: this.emptyBBox };
     this.textRef= React.createRef();
   }
 
   componentDidUpdate() {
-    const newBBox = this.textRef.current.getBBox();
+    let newBBox;
+    if (this.props.label.length > 0) {
+      newBBox = this.textRef.current.getBBox();
+    } else {
+      newBBox = emptyBBox;
+    }
+    // I suppose we could also check height here, but width is the one that
+    // will really change (as the user types).
     if (newBBox.width !== this.state.bbox.width) {
       this.setState({bbox: newBBox});
     }
@@ -19,7 +27,7 @@ export default class Box extends Component {
     if (this.props.label.length > 0) {
       this.setState({ bbox: this.textRef.current.getBBox()});
     } else {
-      this.setState({ bbox: this.emptyBBox });
+      this.setState({ bbox: emptyBBox });
     }
   }
 
