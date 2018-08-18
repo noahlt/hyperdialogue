@@ -4,6 +4,7 @@ export const mode = {
   connecting: 2,
   typing: 3,
   linkSelected: 4,
+  noop: 5, // like default, except the next action (probably a mouseup) does not create a new node
 }
 
 export const colors = [

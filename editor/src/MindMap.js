@@ -14,6 +14,11 @@ function guid() {
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
 
+const modeLabel = (mode) =>
+  ['default', 'selected', 'connecting', 'typing', 'linkSelected'][mode];
+
+const debug = true;
+
 export default class MindMap extends Component {
   constructor(props) {
     super(props);
@@ -35,6 +40,15 @@ export default class MindMap extends Component {
     return [evt.pageX - svgRect.left, evt.pageY - svgRect.top];
   }
 
+  mouseDownEmpty(evt) {
+    if (this.state.mode === mode.selected) {
+      this.props.setSelected(null);
+      // noop is just a mode like default, only exists so that when we hit
+      // mouseUpEmpty (below) in this state we won't create a new node.
+      this.setState({mode: mode.noop});
+    }
+  }
+
   mouseMoveEmpty(evt) {
     if (this.state.mode === mode.connecting) {
       let [x, y] = this.getMouseCoordinates(evt);
@@ -42,7 +56,7 @@ export default class MindMap extends Component {
         mouseX: x,
         mouseY: y,
       });
-    } else if (this.state.mode === mode.selected && /*nodeID === this.props.selectedNode.nodeID &&*/ evt.buttons === 1) {
+    } else if (this.state.mode === mode.selected && evt.buttons === 1) {
       let [mouseX, mouseY] = this.getMouseCoordinates(evt);
       this.props.setDoc(_.mapValues(this.props.doc, (node) => {
         if (node.nodeID === this.props.selectedNode.nodeID) {
@@ -81,12 +95,10 @@ export default class MindMap extends Component {
   }
 
   handleFocus() {
-    console.log('focus!');
     this.setState({hasFocus: true});
   }
 
   handleBlur() {
-    console.log('blur!');
     this.setState({hasFocus: false});
   }
 
@@ -98,20 +110,10 @@ export default class MindMap extends Component {
       mode: mode.selected,
       hasFocus: true,
     });
-    console.log('clickNode');
   }
 
   mouseMoveNode(nodeID, evt) {
-    if (this.state.mode === mode.default && evt.buttons === 1) {
-      this.props.setSelected(nodeID);
-      let [mouseX, mouseY] = this.getMouseCoordinates(evt);
-      this.setState({
-        hasFocus: true,
-        mode: mode.connecting,
-        mouseX: mouseX,
-        mouseY: mouseY,
-      });
-    } else if (this.state.mode === mode.connecting && nodeID !== this.props.selectedNode.nodeID) {
+    if (this.state.mode === mode.connecting && nodeID !== this.props.selectedNode.nodeID) {
       this.setState({
         hover: nodeID,
       });
@@ -120,16 +122,32 @@ export default class MindMap extends Component {
 
   mouseDownNode(nodeID, evt) {
     evt.preventDefault();
+    evt.stopPropagation();
+    if (!this.props.selectedNode || (this.props.selectedNode && this.props.selectedNode.nodeID !== nodeID)) {
+      this.props.setSelected(nodeID);
+      const [mouseX, mouseY] = this.getMouseCoordinates(evt);
+      this.setState({
+        hasFocus: true,
+        mode: mode.connecting,
+        mouseX: mouseX,
+        mouseY: mouseY,
+      });
+    }
   }
 
   mouseUpNode(nodeID, evt) {
     if (this.state.mode === mode.connecting) {
-      this.props.setDoc(_.mapValues(this.props.doc, (node) => {
-        if (node.nodeID === this.props.selectedNode.nodeID) {
-          node.links.push(nodeID);
-        }
-        return node;
-      }));
+      evt.stopPropagation();
+      if (!this.props.selectedNode || nodeID !== this.props.selectedNode.nodeID) {
+        this.props.setDoc(_.mapValues(this.props.doc, (node) => {
+          if (node.nodeID === this.props.selectedNode.nodeID) {
+            node.links.push(nodeID);
+          }
+          return node;
+        }));
+      }
+      this.props.setSelected(nodeID);
+      this.setState({mode: mode.selected});
     }
   }
 
@@ -214,6 +232,7 @@ export default class MindMap extends Component {
       viewBox="0 0 1000 500"
       version="1.1"
       tabIndex="0"
+      onMouseDown={this.mouseDownEmpty.bind(this)}
       onMouseMove={this.mouseMoveEmpty.bind(this)}
       onClick={this.clickEmpty.bind(this)}
       onFocus={this.handleFocus.bind(this)}
@@ -237,6 +256,7 @@ export default class MindMap extends Component {
           {...node}
           />
       )}
+      {debug && <text x={0} y={0} alignmentBaseline="hanging">{modeLabel(this.state.mode)}</text>}
     </svg>;
   }
 }
