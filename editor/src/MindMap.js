@@ -42,6 +42,15 @@ export default class MindMap extends Component {
         mouseX: x,
         mouseY: y,
       });
+    } else if (this.state.mode === mode.selected && /*nodeID === this.props.selectedNode.nodeID &&*/ evt.buttons === 1) {
+      let [mouseX, mouseY] = this.getMouseCoordinates(evt);
+      this.props.setDoc(_.mapValues(this.props.doc, (node) => {
+        if (node.nodeID === this.props.selectedNode.nodeID) {
+          node.cx = mouseX;
+          node.cy = mouseY;
+        }
+        return node;
+      }));
     }
   }
 
@@ -93,7 +102,6 @@ export default class MindMap extends Component {
   }
 
   mouseMoveNode(nodeID, evt) {
-    // console.log('app.mouseMoveNode', nodeID, evt.buttons, evt.pageX, evt.pageY);
     if (this.state.mode === mode.default && evt.buttons === 1) {
       this.props.setSelected(nodeID);
       let [mouseX, mouseY] = this.getMouseCoordinates(evt);
@@ -107,15 +115,6 @@ export default class MindMap extends Component {
       this.setState({
         hover: nodeID,
       });
-    } else if (this.state.mode === mode.selected && nodeID === this.props.selectedNode.nodeID && evt.buttons === 1) {
-      let [mouseX, mouseY] = this.getMouseCoordinates(evt);
-      this.props.setDoc(_.mapValues(this.props.doc, (node) => {
-        if (node.nodeID === this.props.selectedNode.nodeID) {
-          node.cx = mouseX;
-          node.cy = mouseY;
-        }
-        return node;
-      }));
     }
   }
 
