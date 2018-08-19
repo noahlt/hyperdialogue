@@ -90,15 +90,27 @@ class LoggedIn extends Component {
         loading: false,
         docList: snapshot.docs.map((doc) => ({id: doc.id, name: doc.data().name}))
       });
-    })
+      const path = new URL(window.location).pathname.split('/');
+      if (path.length === 3 && path[1] === 'edit') {
+        const docFromURL = _.find(snapshot.docs, (doc) => doc.id === path[2]);
+        if (docFromURL) {
+          this.setState({openDoc: {id: docFromURL.id, name: docFromURL.data().name}});
+        } else {
+          // couldn't find the doc, so let's remove it from the URL
+          window.history.pushState({docID: null}, '', '/');
+        }
+      }
+    });
   }
 
   open(listing, evt) {
     this.setState({openDoc: listing});
+    window.history.pushState({docID: listing.id}, listing.name, `edit/${listing.id}`);
   }
 
   close() {
     this.setState({openDoc: null});
+    window.history.pushState({docID: null}, '', '/');
   }
 
   createNew(name) {
