@@ -15,9 +15,9 @@ function guid() {
 }
 
 const modeLabel = (mode) =>
-  ['default', 'selected', 'connecting', 'typing', 'linkSelected'][mode];
+  ['default', 'selected', 'connecting', 'typing', 'linkSelected', 'noop'][mode];
 
-const debug = true;
+const debug = false;
 
 export default class MindMap extends Component {
   constructor(props) {
@@ -50,6 +50,9 @@ export default class MindMap extends Component {
   }
 
   mouseMoveEmpty(evt) {
+    if (this.props.readOnly) {
+      return;
+    }
     if (this.state.mode === mode.connecting) {
       let [x, y] = this.getMouseCoordinates(evt);
       this.setState({
@@ -69,7 +72,7 @@ export default class MindMap extends Component {
   }
 
   clickEmpty(evt) {
-    if (this.state.mode === mode.default && !this.props.selectedNode) {
+    if (this.state.mode === mode.default && !this.props.selectedNode && !this.props.readOnly) {
       let [mouseX, mouseY] = this.getMouseCoordinates(evt);
       let newNode = {
         nodeID: guid(),
@@ -94,7 +97,7 @@ export default class MindMap extends Component {
     }
   }
 
-  handleFocus() {
+  handleFocus(evt) {
     this.setState({hasFocus: true});
   }
 
@@ -123,6 +126,9 @@ export default class MindMap extends Component {
   mouseDownNode(nodeID, evt) {
     evt.preventDefault();
     evt.stopPropagation();
+    if (this.props.readOnly) {
+      return;
+    }
     if (!this.props.selectedNode || (this.props.selectedNode && this.props.selectedNode.nodeID !== nodeID)) {
       this.props.setSelected(nodeID);
       const [mouseX, mouseY] = this.getMouseCoordinates(evt);
@@ -152,7 +158,7 @@ export default class MindMap extends Component {
   }
 
   handleKeyDown(evt) {
-    if (!this.state.hasFocus) {
+    if (!this.state.hasFocus || this.props.readOnly) {
       return;
     }
     evt.preventDefault();
@@ -227,9 +233,8 @@ export default class MindMap extends Component {
     return <svg
       id="generated-svg"
       ref={this.svgRef}
-      width="1000px"
-      height="500px"
-      viewBox="0 0 1000 500"
+      width="auto"
+      height="100%"
       version="1.1"
       tabIndex="0"
       onMouseDown={this.mouseDownEmpty.bind(this)}

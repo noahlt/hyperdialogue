@@ -7,10 +7,7 @@ import 'firebase/auth';
 
 import _ from 'lodash';
 
-import MindMap from './MindMap';
-import ProseEditor from './ProseEditor';
-
-import {colors} from './constants';
+import Editor from './Editor';
 
 firebase.initializeApp({
   apiKey: "AIzaSyCzyxSKeYlkMZBTaAIdJey-wkIHjMi-Uqg",
@@ -150,16 +147,47 @@ class LoggedIn extends Component {
         </div>
       </div>;
     } else {
-      return <div>
-        <div style={{fontSize: 30}}>
+      return <div style={styles.wrapper}>
+        <div style={styles.title}>
           <span style={{cursor: 'pointer'}} onClick={this.close.bind(this)}>💬</span>
           <span>{this.state.openDoc.name}</span>
         </div>
-        <Editor docID={this.state.openDoc.id} docName={this.state.openDoc.name} />
+        <Editor
+          style={styles.editor}
+          docID={this.state.openDoc.id}
+          docName={this.state.openDoc.name}
+          db={db} />
       </div>
     }
   }
 }
+
+
+const styles = {
+  docMenuItem: {
+    padding: 10,
+    margin: 10,
+    border: '1px solid #999',
+    color: '#444',
+    width: 150,
+    cursor: 'pointer',
+  },
+  wrapper: {
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gridTemplateRows: '50px 1fr',
+    gridTemplateAreas: '"title" "editor"',
+  },
+  title: {
+    gridArea: 'title',
+  },
+  editor: {
+    gridArea: 'editor'
+  }
+};
 
 class DocCreator extends Component {
   constructor(props) {
@@ -182,127 +210,5 @@ class DocCreator extends Component {
     </div>
   }
 }
-
-const styles = {
-  docMenuItem: {
-    padding: 10,
-    margin: 10,
-    border: '1px solid #999',
-    color: '#444',
-    width: 150,
-    cursor: 'pointer',
-  }
-};
-
-class Editor extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      doc: {},
-      selected: null,
-      mouseX: 0,
-      mouseY: 0,
-    }
-    this.setSelected = this.setSelected.bind(this);
-    this.setDoc = this.setDoc.bind(this);
-  }
-
-  setSelected(nodeID) {
-    this.setState({selected: nodeID});
-  }
-
-  setDoc(newDoc) {
-    this.setState({doc: newDoc});
-  }
-
-  onPickColor(c) {
-    this.setState({
-      doc: _.mapValues(this.state.doc, (node) => {
-        if (node.nodeID === this.state.selected) {
-          node.color = c;
-        }
-        return node;
-      }),
-    });
-  }
-
-  changeText(evt, x, y, z) {
-    console.log(evt, x, y, z);
-    this.setState({
-      doc: _.mapValues(this.state.doc, (node) => {
-        if (node.nodeID === this.state.selected) {
-          node.text = evt.target.value;
-        }
-        return node;
-      }),
-    });
-  }
-
-  clickSave() {
-    db.collection("dialogues").doc(this.props.docID).set({
-      name: this.props.docName,
-      owner: firebase.auth().currentUser.uid,
-      nodes: this.state.doc,
-    })
-    .then(function() {
-        console.log("Document successfully written!");
-    })
-    .catch(function(error) {
-        console.error("Error writing document: ", error);
-    });
-  }
-
-  componentDidMount() {
-    db.collection('dialogues').doc(this.props.docID).get().then((doc) => {
-      if (!doc.exists) {
-        console.log('unable to load document');
-        return;
-      }
-      console.log('loaded doc data', JSON.stringify(doc.data()));
-      this.setState({
-        doc: doc.data().nodes,
-      });
-    });
-  }
-
-  render() {
-    let selectedNode = this.state.doc[this.state.selected];
-    return <div className="App">
-      <ColorPicker onPickColor={this.onPickColor.bind(this)} />
-      <MindMap
-        selectedNode={selectedNode}
-        doc={this.state.doc}
-        setSelected={this.setSelected}
-        setDoc={this.setDoc}
-        />
-
-      <button onClick={this.clickSave.bind(this)}>save</button>
-
-      <div id="reader">
-        {selectedNode &&
-          <ProseEditor
-            current={selectedNode}
-            nodes={this.state.doc}
-            onChange={this.changeText.bind(this)}
-            />
-        }
-      </div>
-    </div>;
-  }
-}
-
-const ColorPicker = (props) => (
-  <div>
-    {colors.map((c) =>
-      <div
-        key={c}
-        className="colorswatch"
-        style={{backgroundColor: c}}
-        onClick={() => props.onPickColor(c)}
-        />
-    )}
-  </div>
-);
-
 
 export default App;

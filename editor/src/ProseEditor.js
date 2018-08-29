@@ -39,15 +39,13 @@ export default class ProseEditor extends Component {
       ({id: linkID, display: this.props.nodes[linkID].label}));
 
     return <div>
-      <div style={{width: 700}}>
-        <MentionsInput value={text} onChange={this.props.onChange} style={mentionInputStyle}>
-          <Mention
-            trigger="@"
-            data={mentions}
-            style={mentionStyle}
-          />
-        </MentionsInput>
-      </div>
+      <MentionsInput value={text} onChange={this.props.onChange} style={mentionInputStyle}>
+        <Mention
+          trigger="@"
+          data={mentions}
+          style={mentionStyle}
+        />
+      </MentionsInput>
     </div>;
   }
 }
@@ -70,7 +68,6 @@ const mentionInputStyle = {
 
   input: {
     margin: 0,
-    height: 200,
     overflow: 'auto',
   },
 
