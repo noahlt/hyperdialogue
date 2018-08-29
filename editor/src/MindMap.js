@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import './MindMap.css';
 
 import {mode, defaultColor} from './constants';
 import _ from 'lodash';
